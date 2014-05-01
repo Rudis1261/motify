@@ -16,18 +16,28 @@
   limitations under the License.
   -->
 
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <ListPreference
-        android:title="Download Feed"
-        android:summary="Network connectivity required to download the feed."
-        android:key="listPref"
-        android:defaultValue="Wi-Fi"
-        android:entries="@array/listArray"
-        android:entryValues="@array/listValues"
-     />
-    <CheckBoxPreference
-        android:title="Show Summaries"
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">    
+    
+    <SwitchPreference
+        android:title="Manually Connect"
         android:defaultValue="false"
-        android:summary="Show a summary for each link."
-        android:key="summaryPref" />
+        android:summary="Specify the server IP Address to connect to manually"
+        android:key="manualConnect" 
+    />
+    
+    <EditTextPreference 
+        android:title="Server IP Address"
+        android:defaultValue="192.168.1.4"
+        android:summary="Fill in the server IP Address Manually"
+        android:key="serverIp"
+        android:dependency="manualConnect"        
+    />    
+        
+    <EditTextPreference 
+        android:title="Server PORT"
+        android:defaultValue="8080"
+        android:summary="Port on which to connect to the server, default value: 8080"
+        android:key="serverPort"       
+    />
+    
 </PreferenceScreen>

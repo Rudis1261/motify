@@ -15,6 +15,7 @@
 package com.example.android.networkusage;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -22,28 +23,17 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.webkit.WebView;
 import android.widget.Toast;
 
-import com.example.android.networkusage.R;
-import com.example.android.networkusage.StackOverflowXmlParser.Entry;
-
-import org.xmlpull.v1.XmlPullParserException;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.List;
 
 
 /**
@@ -62,23 +52,28 @@ import java.util.List;
  *   to refresh the WebView content.
  */
 public class NetworkActivity extends Activity {
+	
     public static final String WIFI = "Wi-Fi";
     public static final String ANY = "Any";
-    private static final String URL =
-            "http://stackoverflow.com/feeds/tag?tagnames=android&sort=newest";
-
+	
     // Whether there is a Wi-Fi connection.
     private static boolean wifiConnected = false;
-    // Whether there is a mobile connection.
-    private static boolean mobileConnected = false;
+        
     // Whether the display should be refreshed.
     public static boolean refreshDisplay = true;
 
-    // The user's current network preference setting.
-    public static String sPref = null;
-
     // The BroadcastReceiver that tracks network connectivity changes.
-    private NetworkReceiver receiver = new NetworkReceiver();
+    private NetworkReceiver receiver = new NetworkReceiver();       
+    
+    // Application specific vars
+    public static String IPAddress 		= null;
+    public static String IPRange 		= null;
+    public static boolean manualConnect = false;
+    public static String serverIp 		= null;
+    public static boolean connected 	= false;
+    public static String port			= "8080";
+    private ProgressDialog pDialog;
+    		
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -87,8 +82,12 @@ public class NetworkActivity extends Activity {
         // Register BroadcastReceiver to track connection changes.
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         receiver = new NetworkReceiver();
-        this.registerReceiver(receiver, filter);
+        
+        this.registerReceiver(receiver, filter);   
+        setContentView(R.layout.main);
     }
+    
+       
 
     // Refreshes the display if the network connection and the
     // pref settings allow it.
@@ -97,14 +96,28 @@ public class NetworkActivity extends Activity {
         super.onStart();
 
         // Gets the user's network preference settings
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-        // Retrieves a string value for the preferences. The second parameter
-        // is the default value to use if a preference value is not found.
-        sPref = sharedPrefs.getString("listPref", "Wi-Fi");
-
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);        
         updateConnectedFlags();
-
+       
+        // Check whether we should connect manually or scan the network
+        manualConnect 	= sharedPrefs.getBoolean("manualConnect", false);   
+        port 			= sharedPrefs.getString("serverPort", "8080");
+        IPAddress 		= IPAddress();        
+        IPRange 		= IPRange();
+        
+        // If we are to manually connect, then we can set the IP Right now
+        if (manualConnect == true)
+        {
+        	// Get the IP From the preferences
+        	serverIp = sharedPrefs.getString("serverIp", "192.168.1.4");
+        }
+        
+        Log.d("motify", "IP ADDRESS: " + IPAddress);        
+        Log.d("motify", "IP RANGE: " + IPRange);        
+        Log.d("motify", "MANUAL CONNECT: " + String.valueOf(manualConnect));
+        Log.d("motify", "SERVER IP: " + serverIp);
+        Log.d("motify", "SERVER PORT: " + port);
+        
         // Only loads the page if refreshDisplay is true. Otherwise, keeps previous
         // display. For example, if the user has set "Wi-Fi only" in prefs and the
         // device loses its Wi-Fi connection midway through the user using the app,
@@ -113,8 +126,56 @@ public class NetworkActivity extends Activity {
         if (refreshDisplay) {
             loadPage();
         }
+    } 
+        
+    
+    // Get the IP Address of the phone    
+    public String IPAddress() {    	
+    	
+    	WifiManager myWifiManager 	= (WifiManager)getSystemService(Context.WIFI_SERVICE);        
+        WifiInfo myWifiInfo 		= myWifiManager.getConnectionInfo();
+        int myIp 					= myWifiInfo.getIpAddress();
+       
+        int intMyIp3 				= myIp/0x1000000;
+        int intMyIp3mod 			= myIp%0x1000000;
+       
+        int intMyIp2 				= intMyIp3mod/0x10000;
+        int intMyIp2mod 			= intMyIp3mod%0x10000;
+       
+        int intMyIp1 				= intMyIp2mod/0x100;
+        int intMyIp0 				= intMyIp2mod%0x100;
+       
+        // We would like the full one please
+        return String.valueOf(intMyIp0)
+  	          + "." + String.valueOf(intMyIp1)
+  	          + "." + String.valueOf(intMyIp2)
+  	          + "." + String.valueOf(intMyIp3);
     }
 
+    
+    // Get the IP Address Range of the phone    
+    public String IPRange() {    	
+    	
+    	WifiManager myWifiManager 	= (WifiManager)getSystemService(Context.WIFI_SERVICE);        
+        WifiInfo myWifiInfo 		= myWifiManager.getConnectionInfo();
+        int myIp 					= myWifiInfo.getIpAddress();
+       
+        int intMyIp3 				= myIp/0x1000000;
+        int intMyIp3mod 			= myIp%0x1000000;
+       
+        int intMyIp2 				= intMyIp3mod/0x10000;
+        int intMyIp2mod 			= intMyIp3mod%0x10000;
+       
+        int intMyIp1 				= intMyIp2mod/0x100;
+        int intMyIp0 				= intMyIp2mod%0x100;
+       
+        // We would like the full one please
+        return String.valueOf(intMyIp0)
+  	          + "." + String.valueOf(intMyIp1)
+  	          + "." + String.valueOf(intMyIp2);
+    }
+
+    
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -122,6 +183,7 @@ public class NetworkActivity extends Activity {
             this.unregisterReceiver(receiver);
         }
     }
+    
 
     // Checks the network connection and sets the wifiConnected and mobileConnected
     // variables accordingly.
@@ -132,10 +194,10 @@ public class NetworkActivity extends Activity {
         NetworkInfo activeInfo = connMgr.getActiveNetworkInfo();
         if (activeInfo != null && activeInfo.isConnected()) {
             wifiConnected = activeInfo.getType() == ConnectivityManager.TYPE_WIFI;
-            mobileConnected = activeInfo.getType() == ConnectivityManager.TYPE_MOBILE;
+            //mobileConnected = activeInfo.getType() == ConnectivityManager.TYPE_MOBILE;
         } else {
             wifiConnected = false;
-            mobileConnected = false;
+            //mobileConnected = false;
         }
     }
 
@@ -144,24 +206,24 @@ public class NetworkActivity extends Activity {
     // causing a delay that results in a poor user experience, always perform
     // network operations on a separate thread from the UI.
     private void loadPage() {
-        if (((sPref.equals(ANY)) && (wifiConnected || mobileConnected))
-                || ((sPref.equals(WIFI)) && (wifiConnected))) {
+        if (wifiConnected) {
+        	
             // AsyncTask subclass
-            new DownloadXmlTask().execute(URL);
+            //new DownloadXmlTask().execute(URL);
+        	//SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);        
+                        
+            // If we are to manually connect, then we can set the IP Right now
+            if (manualConnect == true)
+            {
+            	// Check the server connection
+            	new ServerStateCheck().execute(serverIp);
+            }
+        	
         } else {
-            showErrorPage();
+            error("failed");
         }
     }
 
-    // Displays an error if the app is unable to load content.
-    private void showErrorPage() {
-        setContentView(R.layout.main);
-
-        // The specified network connection is not available. Displays error message.
-        WebView myWebView = (WebView) findViewById(R.id.webview);
-        myWebView.loadData(getResources().getString(R.string.connection_error),
-                "text/html", null);
-    }
 
     // Populates the activity's options menu.
     @Override
@@ -179,101 +241,96 @@ public class NetworkActivity extends Activity {
                 Intent settingsActivity = new Intent(getBaseContext(), SettingsActivity.class);
                 startActivity(settingsActivity);
                 return true;
-        case R.id.refresh:
+        /*case R.id.refresh:
                 loadPage();
-                return true;
+                return true;*/
         default:
                 return super.onOptionsItemSelected(item);
         }
     }
-
-    // Implementation of AsyncTask used to download XML feed from stackoverflow.com.
-    private class DownloadXmlTask extends AsyncTask<String, Void, String> {
-
+    
+    
+    /**
+     * Async task class to get json by making HTTP call
+     * */
+    private class ServerStateCheck extends AsyncTask<String, Void, Boolean> {
+ 
         @Override
-        protected String doInBackground(String... urls) {
-            try {
-                return loadXmlFromNetwork(urls[0]);
-            } catch (IOException e) {
-                return getResources().getString(R.string.connection_error);
-            } catch (XmlPullParserException e) {
-                return getResources().getString(R.string.xml_error);
-            }
+        protected void onPreExecute() {
+            super.onPreExecute();
+            
+            // Showing progress dialog
+            pDialog = new ProgressDialog(NetworkActivity.this);
+            pDialog.setMessage("Checking server...");
+            pDialog.setCancelable(false);
+            pDialog.show(); 
         }
-
+ 
         @Override
-        protected void onPostExecute(String result) {
-            setContentView(R.layout.main);
-            // Displays the HTML string in the UI via a WebView
-            WebView myWebView = (WebView) findViewById(R.id.webview);
-            myWebView.loadData(result, "text/html", null);
-        }
-    }
-
-    // Uploads XML from stackoverflow.com, parses it, and combines it with
-    // HTML markup. Returns HTML string.
-    private String loadXmlFromNetwork(String urlString) throws XmlPullParserException, IOException {
-        InputStream stream = null;
-        StackOverflowXmlParser stackOverflowXmlParser = new StackOverflowXmlParser();
-        List<Entry> entries = null;
-        String title = null;
-        String url = null;
-        String summary = null;
-        Calendar rightNow = Calendar.getInstance();
-        DateFormat formatter = new SimpleDateFormat("MMM dd h:mmaa");
-
-        // Checks whether the user set the preference to include summary text
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean pref = sharedPrefs.getBoolean("summaryPref", false);
-
-        StringBuilder htmlString = new StringBuilder();
-        htmlString.append("<h3>" + getResources().getString(R.string.page_title) + "</h3>");
-        htmlString.append("<em>" + getResources().getString(R.string.updated) + " " +
-                formatter.format(rightNow.getTime()) + "</em>");
-
-        try {
-            stream = downloadUrl(urlString);
-            entries = stackOverflowXmlParser.parse(stream);
-        // Makes sure that the InputStream is closed after the app is
-        // finished using it.
-        } finally {
-            if (stream != null) {
-                stream.close();
+        protected Boolean doInBackground(String... url) {
+            
+        	// Creating service handler class instance
+            ServiceHandler sh = new ServiceHandler();
+            
+            // We need to string the IP's Toghether
+            String Query = "http://" + url[0] + ":" + port + "/?alive=true";
+            Log.d("motify", "REQUEST: " + Query);
+ 
+            // Making a request to url and getting response
+            String Response = sh.makeServiceCall(Query, ServiceHandler.GET).trim(); 
+            
+            Log.d("motify", "RESPONSE: " + Response);
+            
+            // What was the response
+            if (Response != null)
+            {
+            	Log.d("motify", "SUCCESS");
+            	
+            	// Return a success
+            	return true;
             }
+            
+            Log.d("motify", "FAILURE");
+            
+            // Otherwise return a failure
+            return false;            
         }
-
-        // StackOverflowXmlParser returns a List (called "entries") of Entry objects.
-        // Each Entry object represents a single post in the XML feed.
-        // This section processes the entries list to combine each entry with HTML markup.
-        // Each entry is displayed in the UI as a link that optionally includes
-        // a text summary.
-        for (Entry entry : entries) {
-            htmlString.append("<p><a href='");
-            htmlString.append(entry.link);
-            htmlString.append("'>" + entry.title + "</a></p>");
-            // If the user set the preference to include summary text,
-            // adds it to the display.
-            if (pref) {
-                htmlString.append(entry.summary);
+ 
+        @Override
+        protected void onPostExecute(Boolean Response) {            
+        	super.onPostExecute(Response);
+            
+        	// Dismiss the progress dialog
+            if (pDialog.isShowing())
+                pDialog.dismiss(); 
+            
+            Log.d("motify", String.valueOf(Response));
+            
+            // Check if the result was successful or not
+            if (Response == true) {
+            	connected = true;  
+            	Toast.makeText(NetworkActivity.this, "Connected successfully " + serverIp, Toast.LENGTH_SHORT).show();
             }
-        }
-        return htmlString.toString();
+            
+            // Or not
+            else {
+            	
+            	// Run the failed connection query
+            	error("connection");
+            }            
+        } 
+    }
+    
+    // I would like a generic way of dealing with errors
+    public void error(String type) {
+    	
+    	// Manage a connection issue
+    	if (type == "connection") {
+    		Toast.makeText(NetworkActivity.this, "Failed to connect to server! " + serverIp, Toast.LENGTH_SHORT).show();
+    	}
     }
 
-    // Given a string representation of a URL, sets up a connection and gets
-    // an input stream.
-    private InputStream downloadUrl(String urlString) throws IOException {
-        URL url = new URL(urlString);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setReadTimeout(10000 /* milliseconds */);
-        conn.setConnectTimeout(15000 /* milliseconds */);
-        conn.setRequestMethod("GET");
-        conn.setDoInput(true);
-        // Starts the query
-        conn.connect();
-        InputStream stream = conn.getInputStream();
-        return stream;
-    }
+   
 
     /**
      *
@@ -287,31 +344,22 @@ public class NetworkActivity extends Activity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            ConnectivityManager connMgr =
-                    (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        	
+            ConnectivityManager connMgr 	= (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo networkInfo 		= connMgr.getActiveNetworkInfo();
 
             // Checks the user prefs and the network connection. Based on the result, decides
             // whether
             // to refresh the display or keep the current display.
             // If the userpref is Wi-Fi only, checks to see if the device has a Wi-Fi connection.
-            if (WIFI.equals(sPref) && networkInfo != null
-                    && networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+            if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
                 // If device has its Wi-Fi connection, sets refreshDisplay
                 // to true. This causes the display to be refreshed when the user
                 // returns to the app.
                 refreshDisplay = true;
                 Toast.makeText(context, R.string.wifi_connected, Toast.LENGTH_SHORT).show();
 
-                // If the setting is ANY network and there is a network connection
-                // (which by process of elimination would be mobile), sets refreshDisplay to true.
-            } else if (ANY.equals(sPref) && networkInfo != null) {
-                refreshDisplay = true;
-
-                // Otherwise, the app can't download content--either because there is no network
-                // connection (mobile or Wi-Fi), or because the pref setting is WIFI, and there
-                // is no Wi-Fi connection.
-                // Sets refreshDisplay to false.
+            // No WIFI Network connection
             } else {
                 refreshDisplay = false;
                 Toast.makeText(context, R.string.lost_connection, Toast.LENGTH_SHORT).show();
