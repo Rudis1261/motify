@@ -29,9 +29,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.Toast;
 
 
@@ -73,6 +76,8 @@ public class NetworkActivity extends Activity {
     public static boolean connected 	= false;
     public static String port			= "8080";
     private ProgressDialog pDialog;
+    private float x1,x2;
+    static final int MIN_DISTANCE 		= 150;
     		
 
     @Override
@@ -127,7 +132,26 @@ public class NetworkActivity extends Activity {
             loadPage();
         }
     } 
-        
+    
+    
+    public boolean onKeyDown(int keyCode, KeyEvent event) { 
+	   if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) { 
+		  
+		   if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
+		   {
+			   //Log.d("motify", "Volume DOWN");
+			   Command("vol-down");
+		   }
+		   
+		   else {
+			   //Log.d("motify", "Volume UP");
+			   Command("vol-up");
+		   }
+		   return true;
+	   } else {
+	       return super.onKeyDown(keyCode, event); 
+	   }
+	}   
     
     // Get the IP Address of the phone    
     public String IPAddress() {    	
@@ -150,6 +174,60 @@ public class NetworkActivity extends Activity {
   	          + "." + String.valueOf(intMyIp1)
   	          + "." + String.valueOf(intMyIp2)
   	          + "." + String.valueOf(intMyIp3);
+    }
+    
+    
+    @Override
+    public boolean onTouchEvent(MotionEvent event)
+    {     
+        switch(event.getAction())
+        {
+          case MotionEvent.ACTION_DOWN:
+              x1 = event.getX();                         
+          break;         
+          case MotionEvent.ACTION_UP:
+              x2 = event.getX();
+              float deltaX = x2 - x1;
+              
+              if (Math.abs(deltaX) > MIN_DISTANCE)
+              {
+            	  // Left to Right swipe action
+            	  if (x2 > x1)
+            	  {
+            		  //Toast.makeText(this, "Left to Right swipe [Next]", Toast.LENGTH_SHORT).show ();
+            		  Command("prev");
+            	  }
+            	  
+            	  // Right to left swipe action            	  
+            	  else 
+            	  {
+            		  //Toast.makeText(this, "Right to Left swipe [Previous]", Toast.LENGTH_SHORT).show ();
+            		  Command("next");
+            	  }
+                
+              }
+              else
+              {
+                  // consider as something else - a screen tap for example
+              }                          
+          break;   
+        }           
+        return super.onTouchEvent(event);       
+    }
+    
+    
+    // Manually fire off command to the server
+    public void Command(String input) {
+    	Log.d("motify", "COMMAND: Running " + input);
+    	new SendCommand().execute(input);
+    } 
+    
+    // Manually fire off command to the server
+    public void button_command(View view) {
+    	
+    	String tag = (String) view.getTag();
+    	Log.d("motify", "COMMAND: Running " + tag);
+    	new SendCommand().execute(tag);
     }
 
     
@@ -320,6 +398,45 @@ public class NetworkActivity extends Activity {
             }            
         } 
     }
+    
+    
+
+    /**
+     * Async task class to get json by making HTTP call
+     * */
+    private class SendCommand extends AsyncTask<String, Void, Boolean> {
+  
+        @Override
+        protected Boolean doInBackground(String... command) {
+            
+        	// Creating service handler class instance
+            ServiceHandler sh = new ServiceHandler();
+            
+            // We need to string the IP's Toghether
+            String Query = "http://" + serverIp + ":" + port + "/?command=" + command[0];
+            Log.d("motify", "REQUEST: " + Query);
+ 
+            // Making a request to url and getting response
+            String Response = sh.makeServiceCall(Query, ServiceHandler.GET).trim(); 
+            
+            Log.d("motify", "RESPONSE: " + Response);
+            
+            // What was the response
+            if (Response != null)
+            {
+            	Log.d("motify", "SUCCESS");
+            	
+            	// Return a success
+            	return true;
+            }
+            
+            Log.d("motify", "FAILURE");
+            
+            // Otherwise return a failure
+            return false;            
+        }
+    }
+    
     
     // I would like a generic way of dealing with errors
     public void error(String type) {
