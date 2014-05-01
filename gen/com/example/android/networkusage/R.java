@@ -15,27 +15,31 @@ public final class R {
     public static final class attr {
     }
     public static final class drawable {
-        public static final int ic_action_full_screen=0x7f020000;
-        public static final int ic_action_headphones=0x7f020001;
-        public static final int ic_action_next_item=0x7f020002;
-        public static final int ic_action_pause=0x7f020003;
-        public static final int ic_action_play=0x7f020004;
-        public static final int ic_action_previous_item=0x7f020005;
-        public static final int ic_action_settings=0x7f020006;
-        public static final int ic_action_video=0x7f020007;
-        public static final int ic_launcher=0x7f020008;
+        public static final int background_image=0x7f020000;
+        public static final int background_one=0x7f020001;
+        public static final int background_two=0x7f020002;
+        public static final int bottom_section_test=0x7f020003;
+        public static final int ic_action_full_screen=0x7f020004;
+        public static final int ic_action_headphones=0x7f020005;
+        public static final int ic_action_next_item=0x7f020006;
+        public static final int ic_action_pause=0x7f020007;
+        public static final int ic_action_play=0x7f020008;
+        public static final int ic_action_previous_item=0x7f020009;
+        public static final int ic_action_settings=0x7f02000a;
+        public static final int ic_action_video=0x7f02000b;
+        public static final int ic_launcher=0x7f02000c;
+        public static final int play=0x7f02000d;
+        public static final int top_section_test=0x7f02000e;
     }
     public static final class id {
-        public static final int command_fullscreen=0x7f080004;
-        public static final int command_music=0x7f080002;
-        public static final int command_next=0x7f080008;
-        public static final int command_play=0x7f080007;
-        public static final int command_power=0x7f080005;
-        public static final int command_previous=0x7f080006;
-        public static final int command_video=0x7f080003;
-        public static final int settings=0x7f080009;
-        public static final int status_indicator_offline=0x7f080001;
-        public static final int status_indicator_online=0x7f080000;
+        public static final int command_fullscreen=0x7f080002;
+        public static final int command_music=0x7f080000;
+        public static final int command_next=0x7f080006;
+        public static final int command_play=0x7f080004;
+        public static final int command_power=0x7f080003;
+        public static final int command_previous=0x7f080005;
+        public static final int command_video=0x7f080001;
+        public static final int settings=0x7f080007;
     }
     public static final class layout {
         public static final int main=0x7f030000;

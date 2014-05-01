@@ -1,115 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:orientation="vertical" >
+    android:layout_height="fill_parent" >
+    
+    <ImageView 
+       android:src="@drawable/background_image"
+	   android:layout_height="fill_parent"
+        android:layout_width="fill_parent"
+        android:scaleType="centerCrop" />
+    
+    <ImageView 
+        android:src="@drawable/top_section_test"
+        android:layout_height="fill_parent"
+        android:layout_width="fill_parent"
+        android:scaleType="center" />
+    
+        
+    <ImageView 
+        android:src="@drawable/bottom_section_test"
+        android:layout_height="fill_parent"
+        android:layout_width="fill_parent"
+        android:scaleType="center"
+        android:layout_gravity="bottom" />   
     
     <LinearLayout 
 	    android:layout_width="fill_parent"
 	    android:layout_height="wrap_content"
 	    android:orientation="horizontal"
-	    android:padding="10dp" >	    
-	
-		    <ImageView
-		        android:id="@+id/status_indicator_online"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:src="@android:drawable/presence_online" />
-		    
-		    <ImageView
-		        android:id="@+id/status_indicator_offline"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:src="@android:drawable/presence_offline" />
-		    
-	</LinearLayout>
+    	android:layout_gravity="top"
+        android:gravity="center">
     
-    <LinearLayout 
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content"
-	    android:orientation="horizontal"
-	    android:padding="20dp" >
-    
-	    <ImageButton
+	    <ImageView
 	        android:id="@+id/command_music"
 	        android:text="@string/music"
 	        android:layout_width="wrap_content"
 	    	android:layout_height="wrap_content"
 	    	android:onClick="button_command"
 	    	android:tag="music"
-	    	android:padding="20dp"
+	    	android:padding="15dp"
 	    	android:src="@drawable/ic_action_headphones" />
 	
-	    <ImageButton
+	    <ImageView
 	        android:id="@+id/command_video"
 	        android:text="@string/video"
 	        android:layout_width="wrap_content"
 	    	android:layout_height="wrap_content"
 	    	android:onClick="button_command"
 	    	android:tag="video"
-	    	android:padding="20dp"
+	    	android:padding="15dp"
 	    	android:src="@drawable/ic_action_video" />
 		
-	    <ImageButton
+	    <ImageView
 	        android:id="@+id/command_fullscreen"
 	        android:text="@string/fullscreen"
 	        android:layout_width="wrap_content"
 	    	android:layout_height="wrap_content"
 	    	android:onClick="button_command"
 	    	android:tag="fullscreen"
-	    	android:padding="20dp"
+	    	android:padding="15dp"
 	    	android:src="@drawable/ic_action_full_screen" />
 	    
-	     <ImageButton
+	     <ImageView
 	        android:id="@+id/command_power"
 	        android:text="@string/power"
 	        android:layout_width="wrap_content"
 	    	android:layout_height="wrap_content"
 	    	android:onClick="button_command"
 	    	android:tag="power"
-	    	android:padding="20dp"
+	    	android:padding="15dp"
 	        android:src="@android:drawable/ic_delete" />
 
 	    
   	</LinearLayout>
+  	
+    <ImageView
+	        android:id="@+id/command_play"
+	        android:text="@string/play"
+	        android:layout_width="wrap_content"
+	    	android:layout_height="wrap_content"
+	    	android:onClick="button_command"
+	    	android:gravity="center"
+	    	android:layout_gravity="center"	    	 
+	    	android:tag="play"    	
+	    	android:src="@drawable/play" />
     
     <LinearLayout 
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="20dp" >
+	    android:layout_gravity="bottom"
+	    android:gravity="center"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="horizontal" >
     
-	    <ImageButton
+	    <ImageView
 	        android:id="@+id/command_previous"
 	        android:text="@string/previous"
 	        android:layout_width="wrap_content"
 	    	android:layout_height="wrap_content"
 	    	android:onClick="button_command"
 	    	android:tag="prev"
-	    	android:padding="20dp"
+	    	android:padding="15dp"
+	    	android:layout_weight="1"	    	
 	    	android:src="@drawable/ic_action_previous_item" />
 	
-	    <ImageButton
-	        android:id="@+id/command_play"
-	        android:text="@string/play"
-	        android:layout_width="wrap_content"
-	    	android:layout_height="wrap_content"
-	    	android:onClick="button_command"
-	    	android:tag="play"
-	    	android:padding="20dp"
-	    	android:src="@drawable/ic_action_play" />
-	
-	    <ImageButton
+	    <ImageView
 	        android:id="@+id/command_next"
 	        android:text="@string/next"
 	        android:layout_width="wrap_content"
 	    	android:layout_height="wrap_content"
 	    	android:onClick="button_command"
 	    	android:tag="next"
-	    	android:padding="20dp"
+	    	android:padding="15dp"
+	    	android:layout_weight="1"	    	
 	    	android:src="@drawable/ic_action_next_item" />
 	   
 	    
   	</LinearLayout>
     
-</LinearLayout>
+</FrameLayout>
