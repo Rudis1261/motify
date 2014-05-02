@@ -14,6 +14,16 @@
 
 package com.example.android.networkusage;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import org.apache.http.util.EntityUtils;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -219,7 +229,19 @@ public class NetworkActivity extends Activity {
     // Manually fire off command to the server
     public void Command(String input) {
     	Log.d("motify", "COMMAND: Running " + input);
-    	new SendCommand().execute(input);
+    	//new SendCommand().execute(input);
+    	
+    	if (connected == true)
+    	{
+    		new ServerCommand().execute("command=" + input);
+    	}
+    	
+    	else 
+    	{
+    		notice("Not connected to server!");
+    		Intent settingsActivity = new Intent(getBaseContext(), SettingsActivity.class);
+            startActivity(settingsActivity);
+    	}
     } 
     
     // Manually fire off command to the server
@@ -227,7 +249,19 @@ public class NetworkActivity extends Activity {
     	
     	String tag = (String) view.getTag();
     	Log.d("motify", "COMMAND: Running " + tag);
-    	new SendCommand().execute(tag);
+    	//new SendCommand().execute(tag);
+    	
+    	if (connected == true)
+    	{
+    		new ServerCommand().execute("command=" + tag);
+    	}
+    	
+    	else 
+    	{
+    		notice("Not connected to server!");
+    		Intent settingsActivity = new Intent(getBaseContext(), SettingsActivity.class);
+            startActivity(settingsActivity);
+    	}
     }
 
     
@@ -272,10 +306,8 @@ public class NetworkActivity extends Activity {
         NetworkInfo activeInfo = connMgr.getActiveNetworkInfo();
         if (activeInfo != null && activeInfo.isConnected()) {
             wifiConnected = activeInfo.getType() == ConnectivityManager.TYPE_WIFI;
-            //mobileConnected = activeInfo.getType() == ConnectivityManager.TYPE_MOBILE;
         } else {
             wifiConnected = false;
-            //mobileConnected = false;
         }
     }
 
@@ -294,7 +326,8 @@ public class NetworkActivity extends Activity {
             if (manualConnect == true)
             {
             	// Check the server connection
-            	new ServerStateCheck().execute(serverIp);
+            	//new ServerStateCheck().execute(serverIp);
+            	new ServerCommand().execute("alive=true");
             }
         	
         } else {
@@ -326,116 +359,94 @@ public class NetworkActivity extends Activity {
                 return super.onOptionsItemSelected(item);
         }
     }
-    
-    
-    /**
-     * Async task class to get json by making HTTP call
-     * */
-    private class ServerStateCheck extends AsyncTask<String, Void, Boolean> {
- 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            
-            // Showing progress dialog
-            pDialog = new ProgressDialog(NetworkActivity.this);
-            pDialog.setMessage("Checking server...");
-            pDialog.setCancelable(false);
-            pDialog.show(); 
-        }
- 
-        @Override
-        protected Boolean doInBackground(String... url) {
-            
-        	// Creating service handler class instance
-            ServiceHandler sh = new ServiceHandler();
-            
-            // We need to string the IP's Toghether
-            String Query = "http://" + url[0] + ":" + port + "/?alive=true";
-            Log.d("motify", "REQUEST: " + Query);
- 
-            // Making a request to url and getting response
-            String Response = sh.makeServiceCall(Query, ServiceHandler.GET).trim(); 
-            
-            Log.d("motify", "RESPONSE: " + Response);
-            
-            // What was the response
-            if (Response != null)
-            {
-            	Log.d("motify", "SUCCESS");
-            	
-            	// Return a success
-            	return true;
-            }
-            
-            Log.d("motify", "FAILURE");
-            
-            // Otherwise return a failure
-            return false;            
-        }
- 
-        @Override
-        protected void onPostExecute(Boolean Response) {            
-        	super.onPostExecute(Response);
-            
-        	// Dismiss the progress dialog
-            if (pDialog.isShowing())
-                pDialog.dismiss(); 
-            
-            Log.d("motify", String.valueOf(Response));
-            
-            // Check if the result was successful or not
-            if (Response == true) {
-            	connected = true;  
-            	Toast.makeText(NetworkActivity.this, "Connected successfully " + serverIp, Toast.LENGTH_SHORT).show();
-            }
-            
-            // Or not
-            else {
-            	
-            	// Run the failed connection query
-            	error("connection");
-            }            
-        } 
-    }
-    
-    
 
-    /**
-     * Async task class to get json by making HTTP call
-     * */
-    private class SendCommand extends AsyncTask<String, Void, Boolean> {
-  
-        @Override
-        protected Boolean doInBackground(String... command) {
-            
-        	// Creating service handler class instance
-            ServiceHandler sh = new ServiceHandler();
-            
-            // We need to string the IP's Toghether
-            String Query = "http://" + serverIp + ":" + port + "/?command=" + command[0];
-            Log.d("motify", "REQUEST: " + Query);
- 
-            // Making a request to url and getting response
-            String Response = sh.makeServiceCall(Query, ServiceHandler.GET).trim(); 
-            
-            Log.d("motify", "RESPONSE: " + Response);
-            
-            // What was the response
-            if (Response != null)
-            {
-            	Log.d("motify", "SUCCESS");
-            	
-            	// Return a success
-            	return true;
-            }
-            
-            Log.d("motify", "FAILURE");
-            
-            // Otherwise return a failure
-            return false;            
-        }
+    
+    
+    // Uses AsyncTask to create a task away from the main UI thread. This task takes a 
+    // URL string and uses it to create an HttpUrlConnection. Once the connection
+    // has been established, the AsyncTask downloads the contents of the webpage as
+    // an InputStream. Finally, the InputStream is converted into a string, which is
+    // displayed in the UI by the AsyncTask's onPostExecute method.
+    private class ServerCommand extends AsyncTask<String, Void, String> {
+       @Override
+       protected String doInBackground(String... urls) {
+             
+           // params comes from the execute() call: params[0] is the url.
+           try {
+               return downloadUrl("http://" + serverIp + ":" + port + "/?" + urls[0]);
+           } catch (IOException e) {
+        	   return "Unable to connect to server";
+           }
+       }
+       
+       // onPostExecute displays the results of the AsyncTask.
+       @Override
+       protected void onPostExecute(String result) {	   
+		   Log.d("motify", "DOWNLOAD: " + result);
+      }
+   }
+    
+    protected void handleException(Exception e) {
+        e.printStackTrace();
     }
+    
+    
+	 // Given a URL, establishes an HttpUrlConnection and retrieves
+	 // the web page content as a InputStream, which it returns as
+	 // a string.
+	 private String downloadUrl(String myurl) throws IOException {
+	     InputStream is = null;
+	     // Only display the first 500 characters of the retrieved
+	     // web page content.
+	     int len = 1;	         
+	     try {
+	         URL url = new URL(myurl);
+	         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+	         conn.setReadTimeout(10000 /* milliseconds */);
+	         conn.setConnectTimeout(15000 /* milliseconds */);
+	         conn.setRequestMethod("GET");
+	         conn.setDoInput(true);
+	         // Starts the query
+	         conn.connect();
+	         int response = conn.getResponseCode();
+	         len = conn.getContentLength();
+	         Log.d("motify", "Content Lenght: " + String.valueOf(len));	         
+	         Log.d("motify", "RESPONSE CODE: " + response);	         
+	         is = conn.getInputStream();
+	         
+	         // Convert the InputStream into a string
+	         String contentAsString = readIt(is, len);	         
+	         
+         	if (response == 201) {				 
+			   Log.d("motify", "SUCCESS");
+			   connected = true;
+		    }
+		   
+         	else {
+			   Log.d("motify", "FAILURE");
+			   error("connection");
+			   connected = false;
+         	}
+         	return contentAsString;	 
+	         
+	     // Makes sure that the InputStream is closed after the app is
+	     // finished using it.
+	     } finally {
+	         if (is != null) {
+	             is.close();
+	         } 
+	     }
+	 }
+	 
+	 
+	 // Reads an InputStream and converts it to a String.
+	 public String readIt(InputStream stream, int len) throws IOException, UnsupportedEncodingException {
+	     Reader reader = null;
+	     reader = new InputStreamReader(stream, "UTF-8");        
+	     char[] buffer = new char[len];
+	     reader.read(buffer);
+	     return new String(buffer);
+	 }    
     
     
     // I would like a generic way of dealing with errors
@@ -446,7 +457,13 @@ public class NetworkActivity extends Activity {
     		Toast.makeText(NetworkActivity.this, "Failed to connect to server! " + serverIp, Toast.LENGTH_SHORT).show();
     	}
     }
-
+    
+    
+    // I would like a generic way of dealing with errors
+    public void notice(String notice) {
+    	
+    	Toast.makeText(NetworkActivity.this, notice, Toast.LENGTH_SHORT).show();    	
+    }
    
 
     /**

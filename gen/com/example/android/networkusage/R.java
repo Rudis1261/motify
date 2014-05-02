@@ -34,12 +34,10 @@ public final class R {
     public static final class id {
         public static final int command_fullscreen=0x7f080002;
         public static final int command_music=0x7f080000;
-        public static final int command_next=0x7f080006;
         public static final int command_play=0x7f080004;
         public static final int command_power=0x7f080003;
-        public static final int command_previous=0x7f080005;
         public static final int command_video=0x7f080001;
-        public static final int settings=0x7f080007;
+        public static final int settings=0x7f080005;
     }
     public static final class layout {
         public static final int main=0x7f030000;
