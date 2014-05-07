@@ -29,15 +29,19 @@ public final class R {
         public static final int ic_action_video=0x7f02000b;
         public static final int ic_launcher=0x7f02000c;
         public static final int play=0x7f02000d;
-        public static final int top_section_test=0x7f02000e;
+        public static final int play_action=0x7f02000e;
+        public static final int top_section_action=0x7f02000f;
+        public static final int top_section_failed=0x7f020010;
+        public static final int top_section_test=0x7f020011;
     }
     public static final class id {
-        public static final int command_fullscreen=0x7f080002;
-        public static final int command_music=0x7f080000;
-        public static final int command_play=0x7f080004;
-        public static final int command_power=0x7f080003;
-        public static final int command_video=0x7f080001;
-        public static final int settings=0x7f080005;
+        public static final int command_fullscreen=0x7f080004;
+        public static final int command_music=0x7f080002;
+        public static final int command_play=0x7f080000;
+        public static final int command_power=0x7f080005;
+        public static final int command_video=0x7f080003;
+        public static final int settings=0x7f080006;
+        public static final int top_section=0x7f080001;
     }
     public static final class layout {
         public static final int main=0x7f030000;

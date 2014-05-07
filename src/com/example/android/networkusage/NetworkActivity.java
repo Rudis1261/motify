@@ -22,8 +22,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import org.apache.http.util.EntityUtils;
-
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -45,6 +43,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 
@@ -334,7 +333,64 @@ public class NetworkActivity extends Activity {
             error("failed");
         }
     }
+    
+    // This is a dummy class to indicate server responses
+    private class IndicateFailure extends AsyncTask<String, Void, String> {
+    	
+    	protected void onPreExecute (){
+    		ImageView imageView = (ImageView)findViewById(R.id.top_section);  
+    		imageView.setImageResource(R.drawable.top_section_failed);
+    	}
+    	
+        @Override
+        protected String doInBackground(String... state) {        	
+            try {  
+                Thread.sleep(500); // no need for a loop
+            } catch (InterruptedException e) {
+                Log.e("motify", "Interrupted", e);
+                return "Interrupted";
+            }
+            return "Executed";
+        }      
 
+        @Override
+        protected void onPostExecute(String result) {  
+        	
+        	// Either way set the original image back
+        	ImageView imageView = (ImageView)findViewById(R.id.top_section);
+         	imageView.setImageResource(R.drawable.top_section_test);
+        }
+    }  
+    
+    // This is a dummy class to indicate server responses
+    private class IndicateSuccess extends AsyncTask<String, Void, String> {
+    	
+    	protected void onPreExecute (){
+    		ImageView imageView = (ImageView)findViewById(R.id.top_section);  
+    		imageView.setImageResource(R.drawable.top_section_action);
+    	}
+    	
+        @Override
+        protected String doInBackground(String... state) {        	
+            try {  
+                Thread.sleep(150); // no need for a loop
+            } catch (InterruptedException e) {
+                Log.e("motify", "Interrupted", e);
+                return "Interrupted";
+            }
+            return "Executed";
+        }      
+
+        @Override
+        protected void onPostExecute(String result) {  
+        	
+        	// Either way set the original image back
+        	ImageView imageView = (ImageView)findViewById(R.id.top_section);
+         	imageView.setImageResource(R.drawable.top_section_test);
+        }
+    }
+    
+    
 
     // Populates the activity's options menu.
     @Override
@@ -382,7 +438,15 @@ public class NetworkActivity extends Activity {
        // onPostExecute displays the results of the AsyncTask.
        @Override
        protected void onPostExecute(String result) {	   
-		   Log.d("motify", "DOWNLOAD: " + result);
+		   Log.d("motify", "RESULT: " + result);
+		   
+		   if (result == "SUCCESS") {
+			   new IndicateSuccess().execute(result);
+		   }
+		   
+		   else {
+			   new IndicateFailure().execute(result);
+		   }
       }
    }
     
@@ -410,24 +474,23 @@ public class NetworkActivity extends Activity {
 	         conn.connect();
 	         int response = conn.getResponseCode();
 	         len = conn.getContentLength();
-	         Log.d("motify", "Content Lenght: " + String.valueOf(len));	         
-	         Log.d("motify", "RESPONSE CODE: " + response);	         
+	         //Log.d("motify", "Content Lenght: " + String.valueOf(len));	         
+	         //Log.d("motify", "RESPONSE CODE: " + response);	         
 	         is = conn.getInputStream();
 	         
 	         // Convert the InputStream into a string
-	         String contentAsString = readIt(is, len);	         
-	         
-         	if (response == 201) {				 
-			   Log.d("motify", "SUCCESS");
-			   connected = true;
-		    }
+	         String contentAsString = readIt(is, len);	 
+	         	         
+         	 if (response == 201) {				 
+			    connected = true;
+			    return "SUCCESS";
+		     }
 		   
-         	else {
-			   Log.d("motify", "FAILURE");
-			   error("connection");
-			   connected = false;
-         	}
-         	return contentAsString;	 
+         	 else {
+			    error("connection");
+			    connected = false;
+			    return "FAILURE";	
+         	 }         	  
 	         
 	     // Makes sure that the InputStream is closed after the app is
 	     // finished using it.
